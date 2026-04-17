@@ -14,6 +14,9 @@ import { Menu } from "@/components/menu";
 import { Meta } from "@/components/meta";
 import { startCamera, stopCamera, captureFrame } from "@/features/camera/camera";
 
+const TAP_PROMPT_DEFAULT = "やあ";
+const TAP_PROMPT_VISION = "何が見える？";
+
 export default function Home() {
   const { viewer } = useContext(ViewerContext);
 
@@ -32,6 +35,7 @@ export default function Home() {
   const [whisperUrl, setWhisperUrl] = useState(envDefaults.whisperUrl);
   const [speakerId, setSpeakerId] = useState(envDefaults.speakerId);
   const [chatProcessing, setChatProcessing] = useState(false);
+  const [speakingCount, setSpeakingCount] = useState(0);
   const [chatLog, setChatLog] = useState<Message[]>([]);
   const [assistantMessage, setAssistantMessage] = useState("");
   const [isSttEnabled, setIsSttEnabled] = useState(false);
@@ -228,9 +232,16 @@ export default function Home() {
 
             // 文ごとに音声を生成 & 再生、返答を表示
             const currentAssistantMessage = sentences.join(" ");
-            handleSpeakAi(aiTalks[0], () => {
-              setAssistantMessage(currentAssistantMessage);
-            });
+            setSpeakingCount((c) => c + 1);
+            handleSpeakAi(
+              aiTalks[0],
+              () => {
+                setAssistantMessage(currentAssistantMessage);
+              },
+              () => {
+                setSpeakingCount((c) => c - 1);
+              }
+            );
           }
         }
       } catch (e) {
@@ -261,10 +272,17 @@ export default function Home() {
     ]
   );
 
+  const isBusy = chatProcessing || speakingCount > 0;
+
+  const handleTapVrm = useCallback(() => {
+    const prompt = isVisionEnabled ? TAP_PROMPT_VISION : TAP_PROMPT_DEFAULT;
+    handleSendChat(prompt);
+  }, [isVisionEnabled, handleSendChat]);
+
   return (
     <div className={"font-M_PLUS_2"}>
       <Meta />
-      <VrmViewer />
+      <VrmViewer onTap={handleTapVrm} disabled={isBusy} />
       <MessageInputContainer
         isChatProcessing={chatProcessing}
         isSttEnabled={isSttEnabled}
