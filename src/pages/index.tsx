@@ -17,6 +17,10 @@ import { startCamera, stopCamera, captureFrame } from "@/features/camera/camera"
 const TAP_PROMPT_DEFAULT = "やあ";
 const TAP_PROMPT_VISION = "何が見える？";
 
+// localStorage に保存された空文字は「未設定」とみなし、env デフォルトにフォールバックする
+const orDefault = (value: unknown, fallback: string) =>
+  typeof value === "string" && value.trim() !== "" ? value : fallback;
+
 export default function Home() {
   const { viewer } = useContext(ViewerContext);
 
@@ -46,11 +50,11 @@ export default function Home() {
       const params = JSON.parse(
         window.localStorage.getItem("chatVRMParams") as string
       );
-      setSystemPrompt(params.systemPrompt ?? SYSTEM_PROMPT);
-      setLmStudioUrl(params.lmStudioUrl ?? envDefaults.lmStudioUrl);
-      setLmStudioApiKey(params.lmStudioApiKey ?? envDefaults.lmStudioApiKey);
-      setLmStudioModel(params.lmStudioModel ?? envDefaults.lmStudioModel);
-      setWhisperUrl(params.whisperUrl ?? envDefaults.whisperUrl);
+      setSystemPrompt(orDefault(params.systemPrompt, SYSTEM_PROMPT));
+      setLmStudioUrl(orDefault(params.lmStudioUrl, envDefaults.lmStudioUrl));
+      setLmStudioApiKey(orDefault(params.lmStudioApiKey, envDefaults.lmStudioApiKey));
+      setLmStudioModel(orDefault(params.lmStudioModel, envDefaults.lmStudioModel));
+      setWhisperUrl(orDefault(params.whisperUrl, envDefaults.whisperUrl));
       setSpeakerId(params.speakerId ?? envDefaults.speakerId);
       setChatLog(params.chatLog ?? []);
     }
